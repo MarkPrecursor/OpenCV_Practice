@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+project( CV_Matrix )
+find_package( OpenCV REQUIRED )
+add_executable( CV_Matrix Matrix.cpp )
+target_link_libraries( CV_Matrix ${OpenCV_LIBS} )
