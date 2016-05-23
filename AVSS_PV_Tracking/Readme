@@ -1,0 +1,5 @@
+该项目由两部分组成：
+1.调用车辆检测分类器从视频中检测出一辆汽车
+2.采用KCF算法进行车辆跟踪
+由于这里只是进行单目标跟踪实验，因此只对测试视频AVSS_PV_Medium_Divx.avi(http://www.eecs.qmul.ac.uk/~andrea/avss2007_d.html)的局部片段进行了测试
+这里调用的KCF源码由https://github.com/joaofaro/KCFcpp下载
