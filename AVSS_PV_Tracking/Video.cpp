@@ -19,6 +19,69 @@ bool FIXEDWINDOW = true;
 bool MULTISCALE = true;
 bool LAB = true;
 
+class Queue
+{
+/**/
+private:
+    const static int _Long = 50;
+public:
+    int Data[_Long][2];
+    int Front;
+    int rear;
+    int num;
+    Queue()
+    {
+        Front = 0;
+        rear = 0;
+        num = 0;
+    }
+
+
+    bool Empty()
+    {
+        if(Front == rear)
+            return true;
+        else
+            return false;
+    }
+
+    void append(int _data[2])
+    {
+        Data[rear][0] = _data[0];
+        Data[rear][1] = _data[1];
+        rear++;
+        num++;
+        if(rear > _Long - 1)
+            rear = 0;
+        if(num > _Long)
+        {
+            Front++;
+            num = _Long;
+        }        
+        if(Front > _Long - 1)
+            Front = 0;
+    }
+
+    void Draw_Trace(Mat img)
+    {
+        int index = Front + 1;
+        int p_index = Front;
+        if(num > 0)
+        {
+            for(int i = 1; i < num; i++)
+            {
+                if(index > _Long - 1)
+                    index = 0;
+                Point p1 = Point(Data[p_index][0], Data[p_index][1]);
+                Point p2 = Point(Data[index][0], Data[index][1]);
+                cv::line(img, p1, p2, CV_RGB(255, 0, 0), 2);
+                p_index = index;
+                index ++;
+            }
+        }
+    }
+};
+
 int main()
 {
     //分类器相关
@@ -58,7 +121,6 @@ int main()
     double rate = capture.get(CV_CAP_PROP_FPS);
     cout<< "fps:" << rate << endl;
 
-    
     Mat frame;                          //承载每一帧的图像
     namedWindow("Detected");            //显示每一帧分类器作检测的窗口
     namedWindow("Tracken");
@@ -74,6 +136,7 @@ int main()
     // create the tracker
     KCFTracker tracker(HOG, FIXEDWINDOW, MULTISCALE, LAB);
     int xMin, yMin, width, height;
+    Queue Trace;
     // xMin = detected_ROI[0];
     // yMin = detected_ROI[1];
     width = cvRound((detected_ROI[3] - detected_ROI[1]) * 1.3);
@@ -88,6 +151,7 @@ int main()
     while(!stop)
     {
         double t = (double)getTickCount();
+        int Center_x, Center_y;
         //读取下一帧
         if(!capture.read(frame))
         {
@@ -96,16 +160,29 @@ int main()
         }
         Mat Track = frame.clone();
         Tracker_ROI = tracker.update(Track);
+
+        Center_x = Tracker_ROI.x + Tracker_ROI.height / 2;
+        Center_y = Tracker_ROI.y + Tracker_ROI.width / 2;
+        int Center[2] = {Center_x, Center_y};
+        Trace.append(Center);
+        // cout << "Front" << Trace.Front << endl;
+        // cout << "Rear" << Trace.rear << endl;
+
         rectangle(Track, Tracker_ROI, Track_color, 3, 8, 0);
+        Trace.Draw_Trace(Track);
+
         t = ((double)getTickCount() - t)/getTickFrequency();
-        cout << "Times passed in seconds: " << t << endl; 
+        cout << "Track Speed: " << 1. / t << "fps" << endl; 
         imshow("Tracken", Track);
         // detectAndDraw(frame, cascade,  scale, tryflip);
         // imshow("Extracted frame",frame);
 
         int c = waitKey(delay);
         if((char) c == 27 || currentFrame > frameToStop)
+        {
             stop = true;
+            imwrite("Result1.jpg", Track);
+        }
         currentFrame++; 
 
     }
